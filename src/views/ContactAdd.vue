@@ -23,6 +23,7 @@ export default {
         address: "",
         phone: "",
         favorite: false,
+        interests: [], //Thêm mới: mảng lĩnh vực yêu thích, mặc định là rỗng
       },
       message: "",
     };

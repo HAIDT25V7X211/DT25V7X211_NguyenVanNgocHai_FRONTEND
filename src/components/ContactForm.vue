@@ -51,6 +51,45 @@
         <strong>Liên hệ yêu thích</strong>
       </label>
     </div>
+
+    <!-- THÊM MỚI: chọn lĩnh vực yêu thích, chỉ hiện khi đã tick Liên hệ yêu thích -->
+    <div v-if="contactLocal.favorite" class="form-group interest-box">
+      <strong>Chọn lĩnh vực yêu thích</strong>
+      <div class="mt-2">
+        <button
+          v-for="(items, group) in groups"
+          :key="group"
+          type="button"
+          class="btn btn-sm mr-2"
+          :class="activeGroup === group ? 'btn-info' : 'btn-outline-info'"
+          @click="selectGroup(group)"
+        >
+          {{ group }}
+        </button>
+      </div>
+      <div v-if="activeGroup" class="mt-2">
+        <div
+          v-for="item in groups[activeGroup]"
+          :key="item"
+          class="form-check form-check-inline"
+        >
+          <input
+            :id="'interest-' + item"
+            type="checkbox"
+            class="form-check-input"
+            :value="item"
+            v-model="contactLocal.interests"
+          />
+          <label :for="'interest-' + item" class="form-check-label">{{
+            item
+          }}</label>
+        </div>
+      </div>
+      <div v-if="contactLocal.interests.length" class="mt-2">
+        <strong>Đã chọn:</strong> {{ contactLocal.interests.join(", ") }}
+      </div>
+    </div>
+
     <div class="form-group">
       <button class="btn btn-primary">Lưu</button>
       <button
@@ -71,6 +110,7 @@
 <script>
 import * as yup from "yup";
 import { Form, Field, ErrorMessage } from "vee-validate";
+import { INTEREST_GROUPS } from "@/constants/interests"; // THÊM MỚI
 
 export default {
   components: {
@@ -104,12 +144,26 @@ export default {
     return {
       // Chúng ta sẽ không muốn hiệu chỉnh props, nên tạo biến cục bộ
       // contactLocal để liên kết với các input trên form
-      contactLocal: this.contact,
+      // SỬA: sao chép props và đảm bảo luôn có mảng interests
+      contactLocal: {
+        ...this.contact,
+        interests: [...(this.contact.interests || [])],
+      },
       contactFormSchema,
+      groups: INTEREST_GROUPS, // THÊM MỚI: dữ liệu các nhóm
+      activeGroup: "", // THÊM MỚI: nhóm đang mở
     };
   },
   methods: {
+    // THÊM MỚI: bấm nhóm để mở, bấm lại để đóng
+    selectGroup(group) {
+      this.activeGroup = this.activeGroup === group ? "" : group;
+    },
     submitContact() {
+      // SỬA: không còn yêu thích thì xóa danh sách sở thích
+      if (!this.contactLocal.favorite) {
+        this.contactLocal.interests = [];
+      }
       this.$emit("submit:contact", this.contactLocal);
     },
     deleteContact() {
@@ -127,9 +181,27 @@ export default {
       else this.$router.push({ name: "contactbook" });
     },
   },
+  // THÊM MỚI: khi sửa liên hệ, tự mở nhóm đã có mục được chọn
+  created() {
+    const found = Object.keys(this.groups).find((g) =>
+      this.groups[g].some((i) => this.contactLocal.interests.includes(i))
+    );
+    if (found) this.activeGroup = found;
+  },
 };
 </script>
 
 <style scoped>
 @import "@/assets/form.css";
+
+/* THÊM MỚI: khung chọn lĩnh vực và nhãn checkbox nằm cùng hàng */
+.interest-box {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+}
+.interest-box label {
+  display: inline-block;
+  margin-top: 0;
+}
 </style>
